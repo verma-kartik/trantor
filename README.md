@@ -85,6 +85,36 @@ ctest --verbose
 ctest -R BasicTest
 ```
 
+## Continuous Integration
+
+This project uses GitHub Actions for automated building and testing across multiple platforms and compilers:
+
+### Build Matrix
+- **Linux (Ubuntu 20.04)**: GCC 11, Clang 12
+- **macOS (12)**: System Clang, GCC 11 (experimental)
+- **Architecture**: 64-bit (x86_64)
+- **Build Types**: Release, Debug
+- **Static Analysis**: clang-tidy, Valgrind (Linux)
+
+### Workflow Status
+All workflows must pass for a successful build:
+- 🔄 **Build and Test**: Full compilation and testing
+- 🧪 **Test Suite**: Focused test execution 
+- 🐛 **Debug Build**: Debug mode with memory checks
+- 📊 **Code Quality**: Static analysis and standards compliance
+
+### Local Testing
+To test locally with different compilers:
+```bash
+# Test with GCC
+cmake -B build-gcc -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+cmake --build build-gcc && cd build-gcc && ctest
+
+# Test with Clang
+cmake -B build-clang -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+cmake --build build-clang && cd build-clang && ctest
+```
+
 ## Build Options
 
 ### Debug Build (Default)
