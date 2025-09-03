@@ -4,6 +4,7 @@
 #include <string>
 #include <optional>
 #include <variant>
+#include <algorithm>
 
 namespace trantor
 {
@@ -68,7 +69,7 @@ namespace trantor
     template<size_t N>
     struct FixedLengthString {
         constexpr FixedLengthString(const char (&str)[N]) {
-            std::copy_n(str, N, value);
+            std::copy(str, str + N, value);
         }
         char value[N]{};
     };

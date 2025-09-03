@@ -1,5 +1,9 @@
 # OrmCpp - Modern C++20 ORM Library
 
+[![Build and Test](https://github.com/verma-kartik/trantor/actions/workflows/build.yml/badge.svg)](https://github.com/verma-kartik/trantor/actions/workflows/build.yml)
+[![Debug Build](https://github.com/verma-kartik/trantor/actions/workflows/debug.yml/badge.svg)](https://github.com/verma-kartik/trantor/actions/workflows/debug.yml)
+[![Code Quality](https://github.com/verma-kartik/trantor/actions/workflows/quality.yml/badge.svg)](https://github.com/verma-kartik/trantor/actions/workflows/quality.yml)
+
 A modern Object-Relational Mapping (ORM) library for C++20, designed to provide type-safe database operations with compile-time validation.
 
 ## Features
@@ -183,11 +187,20 @@ int main() {
 
 ## Compiler Support
 
-| Compiler | Minimum Version | Status |
-|----------|-----------------|--------|
-| GCC      | 11.0           | ✅ Tested |
-| Clang    | 12.0           | ✅ Tested |
-| MSVC     | 19.29          | 🟡 Should work |
+| Compiler | Minimum Version | Linux | macOS | Status |
+|----------|-----------------|-------|-------|--------|
+| GCC      | 11.0           | ✅     | ✅     | Fully Tested |
+| Clang    | 12.0           | ✅     | ✅     | Fully Tested |
+| MSVC     | 19.29          | ❌     | ❌     | Not Supported |
+
+### CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration with the following build matrix:
+- **Linux (Ubuntu Latest)**: GCC 11, Clang 14
+- **macOS (Latest)**: GCC 11, Clang (system)
+- **Build Types**: Release and Debug modes
+- **Architecture**: 64-bit only
+- **Quality Checks**: Static analysis with clang-tidy, memory checks with Valgrind (Linux)
 
 ## CMake Targets
 

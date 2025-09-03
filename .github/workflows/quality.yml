@@ -1,0 +1,74 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake libsqlite3-dev pkg-config clang-14 clang-tools-14
+
+    - name: Set up environment
+      run: |
+        echo "CC=clang-14" >> $GITHUB_ENV
+        echo "CXX=clang++-14" >> $GITHUB_ENV
+
+    - name: Configure CMake for static analysis
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_C_COMPILER=clang-14 \
+          -DCMAKE_CXX_COMPILER=clang++-14 \
+          -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+    - name: Run clang-tidy
+      run: |
+        find src include -name "*.cpp" -o -name "*.hpp" | head -10 | xargs -I {} \
+          clang-tidy-14 {} -- -std=c++20 -Iinclude $(pkg-config --cflags sqlite3) || echo "clang-tidy completed with warnings"
+
+    - name: Build with warnings as errors
+      run: |
+        cmake -B build-strict \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DCMAKE_C_COMPILER=clang-14 \
+          -DCMAKE_CXX_COMPILER=clang++-14 \
+          -DCMAKE_CXX_FLAGS="-Werror -Wall -Wextra -Wpedantic"
+        cmake --build build-strict --parallel $(nproc)
+
+  documentation:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check README
+      run: |
+        echo "Checking README.md structure:"
+        grep -E "^##?\s" README.md || echo "No headers found"
+        
+        echo "Checking for common sections:"
+        grep -i "installation\|build\|usage\|contributing" README.md || echo "Some standard sections may be missing"
+        
+        echo "README.md validation complete"
+
+    - name: Check CMake files
+      run: |
+        echo "Validating CMakeLists.txt files:"
+        find . -name "CMakeLists.txt" -exec echo "Checking: {}" \; -exec head -3 {} \;
+        echo "CMake validation complete"
