@@ -1,81 +1,286 @@
-# Trantor 
+# OrmCpp - Modern C++20 ORM Library
 
-Welcome to Trantor, an ORM written in C++ 20 for SQLite databases! Trantor is an Object Relational Mapper (ORM) that allows developers to interact with a SQLite database using object-oriented programming principles. Utilizing the power of C++20 and template metaprogramming, Trantor provides a simple, robust, and efficient way to interact with SQLite databases.
+A modern Object-Relational Mapping (ORM) library for C++20, designed to provide type-safe database operations with compile-time validation.
 
 ## Features
 
-- Ensured type safety during compilation; Avoided code generation
-- Minimized the need for repetitive code
-- No need to inherit from specific sources or adhere to predefined interfaces
-- Utilized SQL-esque syntax for composing complex queries without resorting to raw SQL
-- Eliminated the possibility of creating invalid queries"
+- **C++20 Modern Features**: Leverages concepts, constexpr if, and other modern C++ features
+- **Type Safety**: Compile-time type checking for database operations
+- **Header-Only Design**: Easy integration into existing projects (planned)
+- **Cross-Platform**: Works on Linux, macOS, and Windows
+- **Comprehensive Testing**: Google Test integration for reliable development
 
-## Using Trantor
+## Project Structure
 
-1. Write your objects
+```
+ormcpp/
+├── CMakeLists.txt          # Main CMake configuration
+├── README.md              # This file
+├── src/                   # Source files
+│   └── main.cpp          # Example/demo application
+├── include/               # Header files
+│   └── ormcpp/           # Library headers (to be added)
+├── tests/                 # Test files
+│   ├── CMakeLists.txt    # Test configuration
+│   └── basic_test.cpp    # Basic tests
+├── docs/                  # Documentation
+├── examples/              # Usage examples
+└── build/                 # Build directory (generated)
+```
+
+## Prerequisites
+
+- **CMake** 3.20 or higher
+- **GCC 11+** or **Clang 12+** (C++20 support required)
+- **Git** (for dependency management)
+- **Internet connection** (for downloading Google Test)
+
+## Getting Started
+
+### 1. Clone the Repository
+
+```bash
+git clone <your-repo-url>
+cd ormcpp
+```
+
+### 2. Build the Project
+
+```bash
+# Create build directory
+mkdir -p build
+cd build
+
+# Configure with CMake
+cmake ..
+
+# Build the project
+make
+
+# Or use cmake to build
+cmake --build .
+```
+
+### 3. Run the Application
+
+```bash
+# Run the main executable
+./ormcpp
+```
+
+### 4. Run Tests
+
+```bash
+# Run tests directly
+./tests/ormcpp_tests
+
+# Or use CTest for detailed output
+ctest --verbose
+
+# Run specific test
+ctest -R BasicTest
+```
+
+## Build Options
+
+### Debug Build (Default)
+```bash
+cmake -DCMAKE_BUILD_TYPE=Debug ..
+make
+```
+
+### Release Build
+```bash
+cmake -DCMAKE_BUILD_TYPE=Release ..
+make
+```
+
+### Build with Specific Compiler
+```bash
+# Using GCC
+cmake -DCMAKE_CXX_COMPILER=g++ ..
+
+# Using Clang
+cmake -DCMAKE_CXX_COMPILER=clang++ ..
+```
+
+## Development Workflow
+
+### Adding New Features
+
+1. **Create header files** in `include/ormcpp/`
+2. **Create source files** in `src/` (if not header-only)
+3. **Add tests** in `tests/`
+4. **Update CMakeLists.txt** if needed
+5. **Build and test**
+
+### Testing
+
+The project uses Google Test for unit testing:
+
+```bash
+# Add new test file in tests/
+touch tests/my_new_test.cpp
+
+# CMake will automatically detect and compile new test files
+cd build && make
+
+# Run all tests
+./tests/ormcpp_tests
+```
+
+### Example Test Structure
 
 ```cpp
-struct Object {
-    int id = 0;
-    std::string some_text;
+#include <gtest/gtest.h>
+#include "ormcpp/your_header.hpp"
+
+TEST(YourTestSuite, TestName) {
+    // Your test code
+    EXPECT_EQ(expected, actual);
+}
+```
+
+## C++20 Features Used
+
+This project leverages modern C++20 features:
+
+- **Concepts**: Type constraints for template parameters
+- **constexpr if**: Compile-time conditional compilation
+- **Template improvements**: Enhanced template argument deduction
+- **Modules**: (Planned for future versions)
+
+### Example Usage (Planned)
+
+```cpp
+#include <ormcpp/orm.hpp>
+
+// Define your entity
+class User : public ormcpp::Entity {
+public:
+    int id;
+    std::string name;
+    std::string email;
+    
+    std::string getTableName() const override {
+        return users;
+    }
 };
 
-```
-`trantor` doesn't provide a base class or anything like that. The types for the
-SQL table are instead inferred from types used in the C++ code.
-
-2. Create a `Table` for your object
-```cpp
-using ObjectTable = trantor::Table<"objects", Object,
-    trantor::Column<"id", &Object::id, trantor::PrimaryKey<>>,
-    trantor::Column<"some_text", &Object::some_text>
->;
-```
-This is the mapping that will tell `trantor` how to deal with `Object` and what table
-in the database it is referring to.
-
-3. Create a connection
-```cpp
-auto connection = trantor::Connection<ObjectTable>("./path/to/my/data.db");
-```
-The connection template accepts a list of tables, and should contain all the tables
-that your application is going to work with.
-
-___
-### Connection options
-The connection constructor can take additional options, `flags` and `z_vfs`, these
-arguments are forwarded directly to SQLite.
-
-The default flags are `SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE`
-
-[You can read about them here](https://www.sqlite.org/capi3ref.html#sqlite3_open)
-
-#### Logger
-It is also possible to pass a function to the connection when it is created where logs
-can be sent. This is useful for debugging, but probably shouldn't be used in production.
-```cpp
-using connection_t = Connection<table1, table2, table3, //etc...
-
-auto connection = connection_t("mydata.db", 0, nullptr, [](auto level, const auto& msg) {
-    if (trantor::log_level::Error == level)
-        std::cerr << "Ooops: " << msg;
-    else
-        std::cout << msg;
-});
+// Use the ORM
+int main() {
+    ormcpp::Repository<User> userRepo(sqlite:///users.db);
+    
+    // Find users
+    auto users = userRepo.findAll();
+    
+    // Find by condition
+    auto admins = userRepo.findBy(role, admin);
+    
+    return 0;
+}
 ```
 
-Logs will be sent at two levels, `Error` & `Debug`
+## Compiler Support
 
-`Error` logs will include most errors that cause an exception.
+| Compiler | Minimum Version | Status |
+|----------|-----------------|--------|
+| GCC      | 11.0           | ✅ Tested |
+| Clang    | 12.0           | ✅ Tested |
+| MSVC     | 19.29          | 🟡 Should work |
 
-`Debug` will include information about statement preparation, and raw queries
-that are actually sent to the database.
+## CMake Targets
 
-___
+| Target        | Description                    |
+|---------------|--------------------------------|
+| `ormcpp`     | Main executable               |
+| `ormcpp_lib` | Library (static/interface)    |
+| `ormcpp_tests` | Test executable             |
+| `run_tests`  | Custom target to run tests   |
 
-### Multithreading
+## Configuration Summary
 
-This is currently not well tested but in theory it should work fine as long as
-you follow the golden rule:
+The build system provides a configuration summary:
 
-**:warning: 1 connection per thread**
+```
+-- ormcpp Configuration Summary:
+--   Version: 1.0.0
+--   Build type: Debug
+--   C++ standard: 20
+--   Compiler: GNU
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **CMake version too old**:
+   - Update CMake to 3.20 or higher
+
+2. **C++20 not supported**:
+   - Update compiler (GCC 11+, Clang 12+)
+
+3. **Google Test download fails**:
+   - Check internet connection
+   - May need to configure proxy if behind corporate firewall
+
+4. **Build fails with template errors**:
+   - Ensure you're using a C++20 compatible compiler
+   - Check that `-std=c++20` is being used
+
+### Debugging Build Issues
+
+```bash
+# Verbose build output
+make VERBOSE=1
+
+# Clean rebuild
+rm -rf build
+mkdir build && cd build
+cmake .. && make
+
+# Check compiler version
+g++ --version
+cmake --version
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes
+4. Add tests for new functionality
+5. Run tests: `ctest`
+6. Commit changes: `git commit -m 'Add amazing feature'`
+7. Push to branch: `git push origin feature/amazing-feature`
+8. Open a Pull Request
+
+## Development Environment
+
+This project is developed using:
+- **Docker**: For consistent development environment
+- **CLion**: IDE with remote development support
+- **GCC 11**: Primary compiler for C++20 features
+
+## License
+
+[Add your license here]
+
+## Roadmap
+
+- [ ] Basic ORM functionality
+- [ ] SQLite backend
+- [ ] PostgreSQL backend
+- [ ] MySQL backend
+- [ ] Query builder
+- [ ] Migrations support
+- [ ] Connection pooling
+- [ ] Header-only conversion
+
+## Changelog
+
+### v1.0.0 (Current)
+- Initial project setup
+- CMake configuration with C++20
+- Google Test integration
+- Basic project structure

@@ -1,28 +1,32 @@
-cmake_minimum_required(VERSION 3.8)
-project(trantor_tests CXX)
+# Test configuration
+file(GLOB_RECURSE TEST_SOURCES "*.cpp")
 
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+# Create test executable
+add_executable(ormcpp_tests ${TEST_SOURCES})
 
-add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../" include)
-
-include(FetchContent)
-FetchContent_Declare(
-        googletest
-        GIT_REPOSITORY https://github.com/google/googletest
-        GIT_TAG release-1.12.1
+# Link with Google Test and our library
+target_link_libraries(ormcpp_tests 
+    ormcpp_lib
+    gtest
+    gtest_main
+    pthread
 )
 
-set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-FetchContent_MakeAvailable(googletest)
+# Set C++20 standard for tests
+target_compile_features(ormcpp_tests PUBLIC cxx_std_20)
 
-enable_testing()
+# Include directories for tests
+target_include_directories(ormcpp_tests PRIVATE 
+    ${CMAKE_SOURCE_DIR}/include
+)
 
-set(test_sources "" src/query_test.cpp)
-file(GLOB_RECURSE test_sources "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp")
-add_executable(runTests ${test_sources})
-target_link_libraries(runTests pthread trantor GTest::gtest_main)
-
+# Add tests to CTest
 include(GoogleTest)
-gtest_discover_tests(runTests)
+gtest_discover_tests(ormcpp_tests)
+
+# Custom test target for convenience
+add_custom_target(run_tests
+    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/ormcpp_tests
+    DEPENDS ormcpp_tests
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
