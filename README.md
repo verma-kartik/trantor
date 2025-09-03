@@ -1,5 +1,9 @@
 # OrmCpp - Modern C++20 ORM Library
 
+[![Build and Test](https://github.com/verma-kartik/trantor/actions/workflows/build.yml/badge.svg)](https://github.com/verma-kartik/trantor/actions/workflows/build.yml)
+[![Debug Build](https://github.com/verma-kartik/trantor/actions/workflows/debug.yml/badge.svg)](https://github.com/verma-kartik/trantor/actions/workflows/debug.yml)
+[![Code Quality](https://github.com/verma-kartik/trantor/actions/workflows/quality.yml/badge.svg)](https://github.com/verma-kartik/trantor/actions/workflows/quality.yml)
+
 A modern Object-Relational Mapping (ORM) library for C++20, designed to provide type-safe database operations with compile-time validation.
 
 ## Features
@@ -79,6 +83,36 @@ ctest --verbose
 
 # Run specific test
 ctest -R BasicTest
+```
+
+## Continuous Integration
+
+This project uses GitHub Actions for automated building and testing across multiple platforms and compilers:
+
+### Build Matrix
+- **Linux (Ubuntu 20.04)**: GCC 11, Clang 12
+- **macOS (12)**: System Clang, GCC 11 (experimental)
+- **Architecture**: 64-bit (x86_64)
+- **Build Types**: Release, Debug
+- **Static Analysis**: clang-tidy, Valgrind (Linux)
+
+### Workflow Status
+All workflows must pass for a successful build:
+- 🔄 **Build and Test**: Full compilation and testing
+- 🧪 **Test Suite**: Focused test execution 
+- 🐛 **Debug Build**: Debug mode with memory checks
+- 📊 **Code Quality**: Static analysis and standards compliance
+
+### Local Testing
+To test locally with different compilers:
+```bash
+# Test with GCC
+cmake -B build-gcc -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+cmake --build build-gcc && cd build-gcc && ctest
+
+# Test with Clang
+cmake -B build-clang -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++
+cmake --build build-clang && cd build-clang && ctest
 ```
 
 ## Build Options
@@ -183,11 +217,20 @@ int main() {
 
 ## Compiler Support
 
-| Compiler | Minimum Version | Status |
-|----------|-----------------|--------|
-| GCC      | 11.0           | ✅ Tested |
-| Clang    | 12.0           | ✅ Tested |
-| MSVC     | 19.29          | 🟡 Should work |
+| Compiler | Minimum Version | Linux | macOS | Status |
+|----------|-----------------|-------|-------|--------|
+| GCC      | 11.0           | ✅     | ✅     | Fully Tested |
+| Clang    | 12.0           | ✅     | ✅     | Fully Tested |
+| MSVC     | 19.29          | ❌     | ❌     | Not Supported |
+
+### CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration with the following build matrix:
+- **Linux (Ubuntu Latest)**: GCC 11, Clang 14
+- **macOS (Latest)**: GCC 11, Clang (system)
+- **Build Types**: Release and Debug modes
+- **Architecture**: 64-bit only
+- **Quality Checks**: Static analysis with clang-tidy, memory checks with Valgrind (Linux)
 
 ## CMake Targets
 

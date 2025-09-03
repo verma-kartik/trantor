@@ -75,7 +75,6 @@ namespace trantor{
         static std::string generateInsertPlaceholders() {
             std::ostringstream ss;
             bool first = true;
-            int count = 0;
             std::apply([&](const auto&... a) {
                 (([&] {
                     using col_t = std::remove_reference_t<decltype(a)>;
@@ -83,7 +82,6 @@ namespace trantor{
                         if (!first) ss << ", ";
                         ss << "?";
                         first = false;
-                        ++count;
                     }
                 }()), ...);
             }, ColumnTuples{});

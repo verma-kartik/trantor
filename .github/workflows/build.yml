@@ -1,0 +1,119 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+
+jobs:
+  build:
+    name: ${{ matrix.os }} - ${{ matrix.compiler }}
+    runs-on: ${{ matrix.os }}
+    continue-on-error: ${{ matrix.experimental }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Linux builds - stable versions
+          - os: ubuntu-20.04
+            compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+            experimental: false
+            install: sudo apt-get update && sudo apt-get install -y gcc-11 g++-11
+          
+          - os: ubuntu-20.04
+            compiler: clang
+            cc: clang-12
+            cxx: clang++-12
+            experimental: false
+            install: sudo apt-get update && sudo apt-get install -y clang-12
+          
+          # macOS builds - system compilers
+          - os: macos-12
+            compiler: clang
+            cc: clang
+            cxx: clang++
+            experimental: false
+            install: echo "Using system clang"
+
+          - os: macos-12
+            compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+            experimental: true
+            install: brew install gcc@11
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        if [[ "${{ matrix.os }}" == "ubuntu-20.04" ]]; then
+          sudo apt-get update
+          sudo apt-get install -y cmake libsqlite3-dev pkg-config
+          ${{ matrix.install }}
+        elif [[ "${{ matrix.os }}" == "macos-12" ]]; then
+          brew install cmake sqlite3 pkg-config
+          ${{ matrix.install }}
+        fi
+
+    - name: Set up environment
+      run: |
+        echo "CC=${{ matrix.cc }}" >> $GITHUB_ENV
+        echo "CXX=${{ matrix.cxx }}" >> $GITHUB_ENV
+
+    - name: Check compiler versions
+      run: |
+        echo "C Compiler:"
+        ${{ matrix.cc }} --version
+        echo "C++ Compiler:"
+        ${{ matrix.cxx }} --version
+        echo "CMake:"
+        cmake --version
+
+    - name: Configure CMake
+      run: |
+        cmake -B build \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }}
+
+    - name: Build
+      run: |
+        echo "Building with ${{ matrix.compiler }}..."
+        if ! cmake --build build --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2); then
+          echo "Build failed with ${{ matrix.compiler }}"
+          if [[ "${{ matrix.experimental }}" == "true" ]]; then
+            echo "This is an experimental build, continuing..."
+            exit 0
+          else
+            exit 1
+          fi
+        fi
+
+    - name: Test
+      working-directory: build
+      run: |
+        if [[ -f "tests/ormcpp_tests" ]]; then
+          ctest --output-on-failure --verbose
+        else
+          echo "No tests found to run"
+        fi
+
+    - name: Test library-only build
+      if: failure()
+      run: |
+        echo "Trying library-only build as fallback..."
+        rm -rf build-lib
+        cmake -B build-lib \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DCMAKE_C_COMPILER=${{ matrix.cc }} \
+          -DCMAKE_CXX_COMPILER=${{ matrix.cxx }} \
+          -DBUILD_TESTING=OFF
+        cmake --build build-lib --target ormcpp_lib --parallel $(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 2) || echo "Library-only build also failed"

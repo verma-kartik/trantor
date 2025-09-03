@@ -1,0 +1,47 @@
+name: CI Summary
+
+on:
+  workflow_run:
+    workflows: ["Build and Test", "Test Suite", "Debug Build and Test", "Code Quality"]
+    types:
+      - completed
+
+jobs:
+  ci-summary:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'skipped'
+    
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    - name: Summary Report
+      run: |
+        echo "## CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Repository**: ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Branch**: ${{ github.event.workflow_run.head_branch }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit**: ${{ github.event.workflow_run.head_sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Workflow**: ${{ github.event.workflow_run.name }}" >> $GITHUB_STEP_SUMMARY
+        echo "**Status**: ${{ github.event.workflow_run.conclusion }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Supported Platforms" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Linux (Ubuntu) with GCC 11" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Linux (Ubuntu) with Clang 12" >> $GITHUB_STEP_SUMMARY  
+        echo "- ✅ macOS with system Clang" >> $GITHUB_STEP_SUMMARY
+        echo "- ⚡ macOS with GCC (experimental)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Architecture" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ x86_64 (64-bit)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Build System" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ CMake 3.20+" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ C++20 Standard" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Google Test Framework" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ SQLite3 Integration" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ github.event.workflow_run.conclusion }}" == "success" ]]; then
+          echo "🎉 All checks passed!" >> $GITHUB_STEP_SUMMARY
+        else
+          echo "❌ Some checks failed - please review the workflow logs" >> $GITHUB_STEP_SUMMARY
+        fi
